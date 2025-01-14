@@ -24,6 +24,7 @@ interface NetworkRequestDetailsProps {
 
 export default function NetworkRequestDetails({ item }: NetworkRequestDetailsProps) {
   const [selectedTab, setSelectedTab] = useState<NetworkTab>('headers');
+  const [beautify, setBeautify] = useState(false);
 
   const isWebSocket = item.type === NetworkType.WS;
 
@@ -110,8 +111,21 @@ export default function NetworkRequestDetails({ item }: NetworkRequestDetailsPro
     content.current.body = <NetworkRequestDetailsItem content={limitChar(item.body)} />;
   }
 
-  if (responseShown && !content.current.response) {
-    content.current.response = <NetworkRequestDetailsItem content={limitChar(item.response)} />;
+  if (responseShown) {
+    const getContent = (): string => {
+      try {
+        const res = typeof item.response === 'string' ? JSON.parse(item.response) : item.response;
+        return beautify ? JSON.stringify(res, null, 2) : limitChar(res);
+      } catch (error) {
+        return limitChar(item.response);
+      }
+    };
+
+    content.current.response = (
+      <TouchableOpacity onLongPress={() => setBeautify(prevState => !prevState)}>
+        <NetworkRequestDetailsItem content={getContent()} />
+      </TouchableOpacity>
+    );
   }
 
   if (messagesShown && !content.current.messages) {
